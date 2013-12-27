@@ -235,7 +235,7 @@ struct wm8903_priv {
 	int mic_last_report;
 	int mic_delay;
 
-#ifdef CONFIG_GPIOLIB
+#if 0//def CONFIG_GPIOLIB
 	struct gpio_chip gpio_chip;
 #endif
 };
@@ -1789,7 +1789,7 @@ static int wm8903_resume(struct snd_soc_codec *codec)
 	return 0;
 }
 
-#ifdef CONFIG_GPIOLIB
+#if 0//def CONFIG_GPIOLIB
 static inline struct wm8903_priv *gpio_to_wm8903(struct gpio_chip *chip)
 {
 	return container_of(chip, struct wm8903_priv, gpio_chip);
