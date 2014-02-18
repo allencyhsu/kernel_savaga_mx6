@@ -112,7 +112,7 @@
 
 static struct clk *sata_clk;
 static struct clk *clko;
-static int enable_lcd_ldb;
+//static int enable_lcd_ldb;
 static int caam_enabled;
 
 extern char *gp_reg_id;
@@ -399,10 +399,6 @@ static struct imxi2c_platform_data mx6q_savage_i2c_data = {
 	.bitrate = 100000,
 };
 
-static struct imxi2c_platform_data mx6q_savage_i2c_50k_data = {
-	.bitrate = 50000,
-};
-
 #ifdef CONFIG_MFD_WM831X
 #include <linux/mfd/wm831x/core.h>
 #include <linux/mfd/wm831x/pdata.h>
@@ -670,6 +666,8 @@ static struct fsl_mxc_hdmi_platform_data hdmi_data = {
 	.init = hdmi_init,
 	.enable_pins = hdmi_enable_ddc_pin,
 	.disable_pins = hdmi_disable_ddc_pin,
+	.phy_reg_vlev = 0x0294,
+	.phy_reg_cksymtx = 0x800d,
 };
 
 static struct fsl_mxc_hdmi_core_platform_data hdmi_core_data = {
@@ -718,6 +716,16 @@ static struct fsl_mxc_capture_platform_data capture_data[] = {
 	},
 };
 
+/*
+struct imx_vout_mem {
+	resource_size_t res_mbase;
+	resource_size_t res_msize;
+};
+
+static struct imx_vout_mem vout_mem __initdata = {
+	.res_msize = SZ_128M,
+};
+*/
 
 static void savage_suspend_enter(void)
 {
@@ -913,7 +921,16 @@ static void __init mx6_savage_board_init(void)
 	gpio_set_value(SAVAGE_LVDS0_EN, 1);
 	gpio_set_value(SAVAGE_LVDS1_EN, 1);
 /*
-	imx6q_add_v4l2_output(0);
+	voutdev = imx6q_add_v4l2_output(0);
+	if (vout_mem.res_msize && voutdev) {
+		dma_declare_coherent_memory(&voutdev->dev,
+					    vout_mem.res_mbase,
+					    vout_mem.res_mbase,
+					    vout_mem.res_msize,
+					    (DMA_MEMORY_MAP |
+					     DMA_MEMORY_EXCLUSIVE));
+	}
+
 	imx6q_add_v4l2_capture(0, &capture_data[0]);
 	imx6q_add_v4l2_capture(1, &capture_data[1]);
 	imx6q_add_mipi_csi2(&mipi_csi2_pdata);
@@ -1050,8 +1067,8 @@ static struct sys_timer mx6_savage_timer = {
 
 static void __init mx6q_savage_reserve(void)
 {
-#if defined(CONFIG_MXC_GPU_VIV) || defined(CONFIG_MXC_GPU_VIV_MODULE)
 	phys_addr_t phys;
+#if defined(CONFIG_MXC_GPU_VIV) || defined(CONFIG_MXC_GPU_VIV_MODULE)
 
 	if (imx6q_gpu_pdata.reserved_mem_size) {
 		phys = memblock_alloc_base(imx6q_gpu_pdata.reserved_mem_size,
@@ -1060,6 +1077,14 @@ static void __init mx6q_savage_reserve(void)
 		imx6q_gpu_pdata.reserved_mem_base = phys;
 	}
 #endif
+/*
+	if (vout_mem.res_msize) {
+		phys = memblock_alloc_base(vout_mem.res_msize,
+					   SZ_4K, SZ_1G);
+		memblock_remove(phys, vout_mem.res_msize);
+		vout_mem.res_mbase = phys;
+	}
+*/
 }
 
 /*
